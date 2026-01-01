@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// Import Routes
+//Import Routes
 const authRoutes = require('./routes/auth.routes');
 app.use('/api/v1/auth', authRoutes);
 
