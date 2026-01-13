@@ -60,7 +60,6 @@ const swaggerSpecs = require('./config/swagger');
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 
-
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;

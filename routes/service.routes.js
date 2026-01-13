@@ -1,7 +1,8 @@
 const express = require('express');
-const { 
+const {
     createCategory, getCategories, updateCategory, deleteCategory,
-    createService, getServices, updateService, deleteService
+    createService, getServices, updateService, deleteService,
+    createSubCategory, getSubCategories, updateSubCategory, deleteSubCategory
 } = require('../controllers/service.controller');
 const { protect, protectAdmin, authorize } = require('../middlewares/auth.middleware');
 const upload = require('../middlewares/upload.middleware');
@@ -16,6 +17,14 @@ router.route('/categories')
 router.route('/categories/:id')
     .put(protectAdmin, authorize('admin', 'superadmin'), updateCategory)
     .delete(protectAdmin, authorize('admin', 'superadmin'), deleteCategory);
+
+router.route('/subcategories')
+    .post(protectAdmin, authorize('admin', 'superadmin'), upload.single('image'), createSubCategory)
+    .get(getSubCategories);
+
+router.route('/subcategories/:id')
+    .put(protectAdmin, authorize('admin', 'superadmin'), updateSubCategory)
+    .delete(protectAdmin, authorize('admin', 'superadmin'), deleteSubCategory);
 
 // Services
 router.route('/services')

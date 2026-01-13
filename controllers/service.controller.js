@@ -1,5 +1,6 @@
 const Service = require('../models/Service');
 const Category = require('../models/Category');
+const SubCategory = require('../models/SubCategory');
 
 // --- CATEGORY CONTROLLERS ---
 
@@ -69,6 +70,76 @@ exports.deleteCategory = async (req, res, next) => {
   }
 }
 
+// --- SUB-CATEGORY CONTROLLERS ---
+
+// @desc    Create SubCategory
+// @route   POST /api/v1/subcategories
+// @access  Private (Admin)
+exports.createSubCategory = async (req, res, next) => {
+  try {
+    const { name, category, status } = req.body;
+    let image = 'https://via.placeholder.com/150';
+
+    if (req.file) {
+      image = req.file.path;
+    }
+
+    const subCategory = await SubCategory.create({ name, category, image, status });
+    res.status(201).json({ success: true, data: subCategory });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get All SubCategories
+// @route   GET /api/v1/subcategories
+// @access  Public
+exports.getSubCategories = async (req, res, next) => {
+  try {
+    let query = { status: 'active' };
+    if (req.query.categoryId) {
+      query.category = req.query.categoryId;
+    }
+    const subCategories = await SubCategory.find(query).populate('category', 'name');
+    res.status(200).json({ success: true, count: subCategories.length, data: subCategories });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update SubCategory
+// @route   PUT /api/v1/subcategories/:id
+// @access  Private (Admin)
+exports.updateSubCategory = async (req, res, next) => {
+  try {
+    const subCategory = await SubCategory.findByIdAndUpdate(req.params.id, req.body, {
+      new: true, runValidators: true
+    });
+    if (!subCategory) {
+      return res.status(404).json({ success: false, message: 'SubCategory not found' });
+    }
+    res.status(200).json({ success: true, data: subCategory });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete SubCategory
+// @route   DELETE /api/v1/subcategories/:id
+// @access  Private (Admin)
+exports.deleteSubCategory = async (req, res, next) => {
+  try {
+    const subCategory = await SubCategory.findById(req.params.id);
+    if (!subCategory) {
+      return res.status(404).json({ success: false, message: 'SubCategory not found' });
+    }
+    await subCategory.deleteOne();
+    res.status(200).json({ success: true, data: {} });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // --- SERVICE CONTROLLERS ---
 
 // @desc    Create Service
@@ -76,7 +147,7 @@ exports.deleteCategory = async (req, res, next) => {
 // @access  Private (Admin)
 exports.createService = async (req, res, next) => {
   try {
-    const { name, category, description, basePrice, visitCharge, status } = req.body;
+    const { name, category, subCategory, description, basePrice, visitCharge, status } = req.body;
     let image = '';
 
     if (req.file) {
@@ -84,7 +155,7 @@ exports.createService = async (req, res, next) => {
     }
 
     const service = await Service.create({
-      name, category, description, basePrice, visitCharge, status, image
+      name, category, subCategory, description, basePrice, visitCharge, status, image
     });
     res.status(201).json({ success: true, data: service });
   } catch (error) {
@@ -100,6 +171,9 @@ exports.getServices = async (req, res, next) => {
     let query = { status: 'active' };
     if (req.query.categoryId) {
       query.category = req.query.categoryId;
+    }
+    if (req.query.subCategoryId) {
+      query.subCategory = req.query.subCategoryId;
     }
 
     const services = await Service.find(query).populate('category', 'name');

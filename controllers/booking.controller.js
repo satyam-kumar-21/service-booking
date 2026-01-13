@@ -8,9 +8,9 @@ const Partner = require('../models/Partner');
 exports.createBooking = async (req, res, next) => {
     try {
         const { serviceId, schedule, address } = req.body;
-        
+
         const service = await Service.findById(serviceId);
-        if(!service) return res.status(404).json({success: false, message: 'Service not found'});
+        if (!service) return res.status(404).json({ success: false, message: 'Service not found' });
 
         const booking = await Booking.create({
             customer: req.user.id,
@@ -20,7 +20,7 @@ exports.createBooking = async (req, res, next) => {
             amount: service.basePrice + service.visitCharge, // Simple calc
         });
 
-        res.status(201).json({success: true, data: booking});
+        res.status(201).json({ success: true, data: booking });
     } catch (error) {
         next(error);
     }
@@ -32,14 +32,11 @@ exports.createBooking = async (req, res, next) => {
 exports.getBookings = async (req, res, next) => {
     try {
         let query = {};
-        if(req.user.role === 'user') {
+        if (req.user.role === 'user') {
             query.customer = req.user.id;
-        } else if(req.user.role === 'partner') {
-             // Find partner profile first
-             const partner = await Partner.findOne({user: req.user.id});
-             if(partner) {
-                query.partner = partner._id;
-             }
+        } else if (req.user.role === 'partner') {
+            // req.user is the partner document itself (aliased by middleware)
+            query.partner = req.user.id;
         }
         // Admin sees all
 
@@ -48,7 +45,7 @@ exports.getBookings = async (req, res, next) => {
             .populate('customer', 'name mobile')
             .populate('partner'); // Populate with partner ref which has User details embedded or ref'd
 
-        res.status(200).json({success: true, count: bookings.length, data: bookings});
+        res.status(200).json({ success: true, count: bookings.length, data: bookings });
     } catch (error) {
         next(error);
     }
@@ -61,14 +58,14 @@ exports.assignPartner = async (req, res, next) => {
     try {
         const { partnerId } = req.body;
         const booking = await Booking.findById(req.params.id);
-        
-        if(!booking) return res.status(404).json({success: false, message: 'Booking not found'});
+
+        if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
 
         booking.partner = partnerId;
         booking.status = 'assigned';
         await booking.save();
 
-        res.status(200).json({success: true, data: booking});
+        res.status(200).json({ success: true, data: booking });
     } catch (error) {
         next(error);
     }
@@ -82,20 +79,22 @@ exports.updateBookingStatus = async (req, res, next) => {
         const { status } = req.body;
         const booking = await Booking.findById(req.params.id);
 
-        if(!booking) return res.status(404).json({success: false, message: 'Booking not found'});
+        if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
 
         // Add logic to check if partner owns this booking
-        if(req.user.role === 'partner') {
-            // ... check partner ownership
+        if (req.user.role === 'partner') {
+            if (booking.partner.toString() !== req.user.id) {
+                return res.status(403).json({ success: false, message: 'Not authorized to update this booking' });
+            }
         }
 
         booking.status = status;
-        if(status === 'completed') {
+        if (status === 'completed') {
             booking.paymentStatus = 'paid'; // Mock auto-pay or cash collection
         }
         await booking.save();
 
-        res.status(200).json({success: true, data: booking});
+        res.status(200).json({ success: true, data: booking });
     } catch (error) {
         next(error);
     }

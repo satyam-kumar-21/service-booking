@@ -1,9 +1,9 @@
 const express = require('express');
-const { 
-    createBooking, getBookings, 
-    assignPartner, updateBookingStatus 
+const {
+    createBooking, getBookings,
+    assignPartner, updateBookingStatus
 } = require('../controllers/booking.controller');
-const { protect, protectAdmin, protectOrAdmin, authorize } = require('../middlewares/auth.middleware');
+const { protect, protectAdmin, protectUniversal, authorize } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
@@ -12,9 +12,9 @@ const router = express.Router();
 
 router.route('/')
     .post(protect, authorize('user'), createBooking)
-    .get(protectOrAdmin, getBookings); // Admin needs to see too, so protectOrAdmin
+    .get(protectUniversal, getBookings); // User, Partner, Admin
 
 router.put('/:id/assign', protectAdmin, authorize('admin', 'superadmin'), assignPartner);
-router.put('/:id/status', protectOrAdmin, authorize('admin', 'superadmin', 'partner'), updateBookingStatus);
+router.put('/:id/status', protectUniversal, authorize('admin', 'superadmin', 'partner'), updateBookingStatus);
 
 module.exports = router;

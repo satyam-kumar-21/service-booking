@@ -10,6 +10,10 @@ const serviceSchema = new mongoose.Schema({
     ref: 'Category',
     required: true,
   },
+  subCategory: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SubCategory',
+  },
   description: String,
   basePrice: {
     type: Number,
